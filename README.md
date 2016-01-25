@@ -31,7 +31,7 @@ $ node index.js -s samples
 ```
 $ node index.js -p 8000
 // test it
-$ curl -XGET "localhost:9000/search?q=cat"
+$ curl -XGET "localhost:8000/search?q=cat"
 ```
 
 ## Rationale
