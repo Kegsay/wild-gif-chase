@@ -227,8 +227,19 @@ if (LOAD_SRC) {
             console.log("Inserted %s files into database.", docs.length);
         }
     });
-    fs.writeFileSync(path.join(TAGS_DIR, "README"),
-        "Put .yaml files here and they will be tagged. Recognised keys:\n" +
-        "caption: 'A long caption here'\n"
+    fs.writeFileSync(path.join(TAGS_DIR, ".global"),
+        "# You can create YAML files in this directory to add tags to your gifs. You can use this when searching.\n\n"+
+        "# There are two types of files:\n" +
+        "# LOCAL: A local file is named after the gif and consists of top-level key-value pairs.\n" +
+        "#        // my-first-gif.yaml\n"+
+        "#        type: Movie\n"+
+        "#        film: Star Wars\n"+
+        "#        person: Harrison Ford\n\n"+
+        "# GLOBAL: You can only have 1 global file and it is called '.global'. It puts the gif name in the keys.\n" +
+        "#       // .global\n"+
+        "#       my-first-gif:\n"+
+        "#           type: Movie\n"+
+        "#           film: Star Wars\n\n"+
+        "# All key names are valid. You can have some local files and a global file. Have fun!\n"
     );
 }
