@@ -1,6 +1,9 @@
 # wild-gif-chase
-Search through an existing GIF collection. Currently does prefix matching on
-the filename of the GIF, and basic word matching based on `-` and `_` as separators.
+Scans a directory for GIF files and create an index which can be searched. Results
+are exposed as HTML via an HTTP server (Express).
+
+Currently this does prefix matching on the filename of the GIF, and basic word
+matching based on `-` and `_` as separators.
 
 ## Requirements
  - ImageMagick for creating thumbnails of the GIFs.
@@ -24,4 +27,16 @@ $ curl -XGET "localhost:9000/search?q=cat"
 
 ## Coming features
  - Pure text file tag support in `.wgc/tags`
+
+## Rationale
+ - GIFs are great to use for responses when chatting.
+ - Timing is everything; the conversation moves on.
+ - Need a quick way to find the "right" GIF. Can't remember the filename.
+ - Need a way to search through GIFs, tag GIFs with arbitrary metadata and expose
+   it all via an HTTP server.
+ - Enter Wild GIF Chase.
+
+### No EXIF/XMP for tagging?
+ - No. I want to add tags using a text editor. Tags are done as separate files.
+ - GIFs are huge. Let's not make them bigger with metadata :)
 
