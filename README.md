@@ -9,8 +9,10 @@ Features:
  - Thumbnails and indexes GIFs
  - Provides search functionality based on the filename of the GIF.
  - Exposed as vanilla HTML (no Javascript; displays correctly on mobile browsers)
+
 Coming soon:
  - Arbitrary tagging support as plain old text files
+ - Better compression over the wire (maybe.)
 
 ## Requirements
  - ImageMagick for creating thumbnails of the GIFs.
