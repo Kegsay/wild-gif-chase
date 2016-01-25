@@ -1,3 +1,7 @@
+data/main.db
+data/access.log
+samples/.wgc
+
 # Logs
 logs
 *.log

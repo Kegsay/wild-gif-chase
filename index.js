@@ -8,6 +8,7 @@ var Datastore = require("nedb");
 var fs = require("fs");
 var nopt = require("nopt");
 var path = require("path");
+var gm = require("gm").subClass({ imageMagick: true });
 
 var opts = nopt({
     "port": Number,
@@ -134,9 +135,12 @@ app.get("/thumbs/:filename", function(req, res) {
         res.send("Failed: " + err.message);
     });
 });
-var server = app.listen(PORT, function() {
-    console.log("Listening on port %s", PORT);
-});
+
+if (!LOAD_SRC) {
+    var server = app.listen(PORT, function() {
+        console.log("Listening on port %s", PORT);
+    });
+}
 
 // DATA STORE
 // ==========
@@ -185,18 +189,32 @@ function findMatchingGifs(words) {
 // DATA DUMP
 // =========
 if (LOAD_SRC) {
-    console.log("Loading from %s", LOAD_SRC);
+    console.log("Loading gifs from: %s", LOAD_SRC);
+    var WGC_DIR = path.join(LOAD_SRC, "/.wgc");
+    var THUMBS_DIR = path.join(WGC_DIR, "/thumbs");
+    var TAGS_DIR = path.join(WGC_DIR, "/tags");
+    if (!fs.existsSync(WGC_DIR)) { fs.mkdirSync(WGC_DIR); }
+    if (!fs.existsSync(THUMBS_DIR)) { fs.mkdirSync(THUMBS_DIR); }
+    if (!fs.existsSync(TAGS_DIR)) { fs.mkdirSync(TAGS_DIR); }
     var files = fs.readdirSync(LOAD_SRC);
-    files = files.filter(function(f) { return f !== "thumbs"; });
-    console.log("Got %s files", files.length);
+    files = files.filter(function(f) { return f.indexOf(".wgc") === -1; });
+    console.log("Found %s files. Processing...", files.length);
     db.insert(files.map(function(file) {
         var wordString = file.replace(".gif", "").toLowerCase();
         var words = wordString.split(/[-_]/g)
         var gifPath = path.join(LOAD_SRC, file);
+        var thumbPath = path.join(THUMBS_DIR, file.replace(".gif", ".jpg"));
         var gifBytes = fs.statSync(gifPath).size;
+        console.log("%s : %s bytes", file, gifBytes);
+        // make a thumbnail
+        gm(gifPath + "[0]").write(thumbPath, function(err) {
+            if (!err) { return; }
+            console.error("Failed to generate thumbnail for %s : %s", gifPath, err);
+        });
+
         return {
             filename: file,
-            thumb: path.join(LOAD_SRC + "/thumbs", file.replace(".gif", ".jpg")),
+            thumb: path.join(THUMBS_DIR, file.replace(".gif", ".jpg")),
             path: gifPath,
             bytes: gifBytes,
             words: words
@@ -206,7 +224,11 @@ if (LOAD_SRC) {
             console.error(err);
         }
         else {
-            console.log("Loaded %s", docs.length);
+            console.log("Inserted %s files into database.", docs.length);
         }
     });
+    fs.writeFileSync(path.join(TAGS_DIR, "README"),
+        "Put .yaml files here and they will be tagged. Recognised keys:\n" +
+        "caption: 'A long caption here'\n"
+    );
 }
