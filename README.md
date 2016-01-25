@@ -1,4 +1,4 @@
-# wild-gif-chase
+# Wild GIF Chase
 Scans a directory for GIF files and create an index which can be searched. Results
 are exposed as HTML via an HTTP server (Express).
 
