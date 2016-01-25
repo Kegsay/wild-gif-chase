@@ -214,7 +214,7 @@ if (LOAD_SRC) {
         gm(gifPath + "[0]").write(thumbPath, function(err) {
             delete thumbGenQueue[gifPath];
             if (!err) {
-                console.log("Generated thumbnail: %s", gifPath);
+                console.log("Generated thumbnail: %s", thumbPath);
             }
             else {
                 console.error("Failed to generate thumbnail for %s : %s", gifPath, err);
@@ -269,6 +269,10 @@ if (LOAD_SRC) {
             console.log("Inserted %s files into database.", docs.length);
         }
     });
+
+    if (fs.existsSync(path.join(TAGS_DIR, ".global"))) {
+        console.log(".global already exists.");
+    }
     fs.writeFileSync(path.join(TAGS_DIR, ".global"),
         "# You can create YAML files in this directory to add tags to your gifs. You can use this when searching.\n\n"+
         "# There are two types of files:\n" +
