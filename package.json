@@ -1,0 +1,21 @@
+{
+  "name": "wild-gif-chase",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT-2.0",
+  "dependencies": {
+    "bluebird": "~3.0.6",
+    "body-parser": "~1.14.1",
+    "express": "~4.13.3",
+    "nedb": "~1.5.0",
+    "nopt": "^3.0.6",
+    "path": "^0.12.7",
+    "morgan": "~1.6.1",
+    "compression": "~1.6.1"
+  }
+}
