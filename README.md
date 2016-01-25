@@ -5,6 +5,13 @@ are exposed as HTML via an HTTP server (Express).
 Currently this does prefix matching on the filename of the GIF, and basic word
 matching based on `-` and `_` as separators.
 
+Features:
+ - Thumbnails and indexes GIFs
+ - Provides search functionality based on the filename of the GIF.
+ - Exposed as vanilla HTML (no Javascript; displays correctly on mobile browsers)
+Coming soon:
+ - Arbitrary tagging support as plain old text files
+
 ## Requirements
  - ImageMagick for creating thumbnails of the GIFs.
 
@@ -24,9 +31,6 @@ $ node index.js -p 8000
 // test it
 $ curl -XGET "localhost:9000/search?q=cat"
 ```
-
-## Coming features
- - Pure text file tag support in `.wgc/tags`
 
 ## Rationale
  - GIFs are great to use for responses when chatting.
