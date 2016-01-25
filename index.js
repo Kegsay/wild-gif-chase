@@ -10,6 +10,8 @@ var nopt = require("nopt");
 var path = require("path");
 var gm = require("gm").subClass({ imageMagick: true });
 
+var DB_PATH = "data/main.db";
+
 var opts = nopt({
     "port": Number,
     "src": path,
@@ -26,6 +28,10 @@ var HALP = opts.help || false;
 if (HALP) {
     console.log("Usage: node index.js -p PORT -s path/to/gif/dir");
     return;
+}
+if (LOAD_SRC) {
+    console.log("Removing database.");
+    try { fs.unlinkSync(DB_PATH); } catch (e) {} // ignore; probably ENOENT
 }
 
 var template = {
@@ -145,7 +151,7 @@ if (!LOAD_SRC) {
 // DATA STORE
 // ==========
 var db = new Datastore({
-    filename: "data/main.db",
+    filename: DB_PATH,
     autoload: true
 });
 
@@ -198,6 +204,44 @@ if (LOAD_SRC) {
     if (!fs.existsSync(TAGS_DIR)) { fs.mkdirSync(TAGS_DIR); }
     var files = fs.readdirSync(LOAD_SRC);
     files = files.filter(function(f) { return f.indexOf(".wgc") === -1; });
+
+    var thumbGenQueue = {};
+    var maxConcurrent = 20;
+    function genThumb(gifPath, thumbPath) {
+        // make a thumbnail
+        thumbGenQueue[gifPath].processing = true;
+        console.log("Generating thumbnail: %s", gifPath);
+        gm(gifPath + "[0]").write(thumbPath, function(err) {
+            delete thumbGenQueue[gifPath];
+            if (!err) {
+                console.log("Generated thumbnail: %s", gifPath);
+            }
+            else {
+                console.error("Failed to generate thumbnail for %s : %s", gifPath, err);
+            }
+            checkGenThumbQueue();
+        });
+    }
+    function queueThumb(gifPath, thumbPath) {
+        thumbGenQueue[gifPath] = { thumb: thumbPath, processing: false };
+    }
+    function checkGenThumbQueue() {
+        var queueKeys = Object.keys(thumbGenQueue);
+        var numProcessing = queueKeys.filter(function(k) {
+            return thumbGenQueue[k].processing;
+        }).length;
+        if (numProcessing >= maxConcurrent) { return; }
+        var numToStart = maxConcurrent - numProcessing;
+        var numStarted = 0;
+        for (var i = 0; i < queueKeys.length; i++) {
+            var entry = thumbGenQueue[queueKeys[i]];
+            if (entry.processing) { continue; }
+            genThumb(queueKeys[i], entry.thumb);
+            numStarted += 1;
+            if (numStarted >= numToStart) { break; }
+        }
+    }
+
     console.log("Found %s files. Processing...", files.length);
     db.insert(files.map(function(file) {
         var wordString = file.replace(".gif", "").toLowerCase();
@@ -207,10 +251,8 @@ if (LOAD_SRC) {
         var gifBytes = fs.statSync(gifPath).size;
         console.log("%s : %s bytes", file, gifBytes);
         // make a thumbnail
-        gm(gifPath + "[0]").write(thumbPath, function(err) {
-            if (!err) { return; }
-            console.error("Failed to generate thumbnail for %s : %s", gifPath, err);
-        });
+        queueThumb(gifPath, thumbPath);
+        checkGenThumbQueue();
 
         return {
             filename: file,
