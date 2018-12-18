@@ -41,6 +41,7 @@ var (
 var (
 	index     = make(map[string][]string) // word => filenames
 	indexSize = 0
+	fileSizes = make(map[string]int64) // filename => size in bytes
 )
 
 // GET /search?q=cat,dog,mouse
@@ -79,6 +80,7 @@ func handleSearch(w http.ResponseWriter, req *http.Request) {
 		entriesHTML[i] = templateify(entryHTML, map[string]string{
 			VarGIFFilename:  fnames[i],
 			VarResultNumber: fmt.Sprintf("%d", i+1),
+			VarGIFSize:      fmt.Sprintf("%d KB", fileSizes[fnames[i]]/1024),
 		})
 	}
 
@@ -143,6 +145,7 @@ func handleThumbs(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.WriteHeader(200)
+	// TODO: LRU cache (50MB)
 	if err := jpeg.Encode(w, img, nil); err != nil {
 		fmt.Println(err)
 		return
@@ -182,6 +185,7 @@ func indexFiles() error {
 			entries = append(entries, name)
 			index[word] = entries
 		}
+		fileSizes[name] = f.Size()
 	}
 	fmt.Println("Indexed", len(files), "files")
 	indexSize = len(files)
