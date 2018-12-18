@@ -8,38 +8,38 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"path"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 )
 
 var (
 	portFlag = flag.Int("port", 0, "Port to listen on")
-	srcFlag = flag.String("src", "", "Source GIF directory")
+	srcFlag  = flag.String("src", "", "Source GIF directory")
 )
 
 var filenameRegexp = regexp.MustCompile(`^[a-zA-Z0-9\-_]+\.gif$`)
 var wordSplitRegexp = regexp.MustCompile(`[-_]`)
 
 var (
-	entryHTML = ""
+	entryHTML   = ""
 	resultsHTML = ""
-	searchHTML = ""
+	searchHTML  = ""
 )
 
 var (
-	VarGIFFilename = "$GIF_FILENAME"
-	VarGIFSize = "$GIF_SIZE"
+	VarGIFFilename  = "$GIF_FILENAME"
+	VarGIFSize      = "$GIF_SIZE"
 	VarResultNumber = "$RESULT_NUMBER"
-	VarNumResults = "$NUM_RESULTS"
-	VarWords = "$WORDS"
-	VarTotalGIFs = "$NUM_GIF_FILES"
-	VarResults = "$RESULTS"
+	VarNumResults   = "$NUM_RESULTS"
+	VarWords        = "$WORDS"
+	VarTotalGIFs    = "$NUM_GIF_FILES"
+	VarResults      = "$RESULTS"
 )
 
 var (
-	index = make(map[string][]string) // word => filenames
+	index     = make(map[string][]string) // word => filenames
 	indexSize = 0
 )
 
@@ -77,16 +77,16 @@ func handleSearch(w http.ResponseWriter, req *http.Request) {
 	entriesHTML := make([]string, len(fnames))
 	for i := range entriesHTML {
 		entriesHTML[i] = templateify(entryHTML, map[string]string{
-			VarGIFFilename: fnames[i],
+			VarGIFFilename:  fnames[i],
 			VarResultNumber: fmt.Sprintf("%d", i+1),
 		})
 	}
 
 	w.Write([]byte(templateify(resultsHTML, map[string]string{
-		VarTotalGIFs: fmt.Sprintf("%d", indexSize),
-		VarWords: q.Get("q"),
+		VarTotalGIFs:  fmt.Sprintf("%d", indexSize),
+		VarWords:      q.Get("q"),
 		VarNumResults: fmt.Sprintf("%d", len(fnames)),
-		VarResults: strings.Join(entriesHTML, "\n"),
+		VarResults:    strings.Join(entriesHTML, "\n"),
 	})))
 }
 
@@ -183,7 +183,7 @@ func indexFiles() error {
 			index[word] = entries
 		}
 	}
-	fmt.Println("Indexed", len(files),"files")
+	fmt.Println("Indexed", len(files), "files")
 	indexSize = len(files)
 	return nil
 }
