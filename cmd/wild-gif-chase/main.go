@@ -59,7 +59,7 @@ func handleSearch(w http.ResponseWriter, req *http.Request) {
 		if len(qword) == 0 {
 			continue
 		}
-		words = append(words, qword)
+		words = append(words, strings.ToLower(qword))
 	}
 
 	if len(words) == 0 {
@@ -70,10 +70,17 @@ func handleSearch(w http.ResponseWriter, req *http.Request) {
 	}
 
 	var fnames []string
+	seen := make(map[string]bool)
 	for _, word := range words {
-		fnames = append(fnames, index[word]...)
+		wordFileNames := index[word]
+		for _, wfn := range wordFileNames {
+			seen[wfn] = true
+		}
 	}
-	fmt.Println(words, "produced", len(fnames), "results")
+	for wfn := range seen {
+		fnames = append(fnames, wfn) // unique filenames only, no dupes
+	}
+	fmt.Println("search:", words, "produced", len(fnames), "results", "-", req.RemoteAddr, req.UserAgent())
 
 	entriesHTML := make([]string, len(fnames))
 	for i := range entriesHTML {
@@ -104,12 +111,13 @@ func handleFiles(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	fmt.Println("file:", fname)
+	fmt.Println("file:", fname, "-", req.RemoteAddr, req.UserAgent())
 	r := readFile(fname)
 	if r == nil {
 		w.WriteHeader(404)
 		return
 	}
+	w.Header().Set("Cache-Control", "public, max-age=604800")
 	w.WriteHeader(200)
 	if _, err := io.Copy(w, r); err != nil {
 		fmt.Println(err)
@@ -128,7 +136,7 @@ func handleThumbs(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	fmt.Println("thumb:", fname)
+	fmt.Println("thumb:", fname, "-", req.RemoteAddr, req.UserAgent())
 
 	f, err := os.Open(path.Join(*srcFlag, fname))
 	if err != nil {
@@ -144,6 +152,7 @@ func handleThumbs(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	w.Header().Set("Cache-Control", "public, max-age=604800")
 	w.WriteHeader(200)
 	// TODO: LRU cache (50MB)
 	if err := jpeg.Encode(w, img, nil); err != nil {
@@ -181,6 +190,7 @@ func indexFiles() error {
 		name := f.Name()
 		words := wordSplitRegexp.Split(strings.TrimSuffix(name, ".gif"), -1)
 		for _, word := range words {
+			word = strings.ToLower(word)
 			entries := index[word]
 			entries = append(entries, name)
 			index[word] = entries
