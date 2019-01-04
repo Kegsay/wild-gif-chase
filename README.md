@@ -1,6 +1,6 @@
 # Wild GIF Chase
 Scans a directory for GIF files and create an index which can be searched. Results
-are exposed as HTML via an HTTP server (Express).
+are exposed via an HTTP server.
 
 Currently this does prefix matching on the filename of the GIF, and basic word
 matching based on `-` and `_` as separators.
@@ -14,25 +14,17 @@ Coming soon:
  - Arbitrary tagging support as plain old text files
  - Better compression over the wire (maybe.)
 
-## Requirements
- - ImageMagick for creating thumbnails of the GIFs.
-
-## Install
+## Building
 ```
-$ npm install
-```
-
-## Setup
-```
-$ node index.js -s samples
+$ go build ./cmd/wild-gif-chase
 ```
 
 ## Running
 ```
-$ node index.js -p 8000
-// test it
-$ curl -XGET "localhost:8000/search?q=cat"
+$ ./wild-gif-chase --port 1234 --src ./samples
 ```
+
+then visit http://localhost:1234/search
 
 ## Rationale
  - GIFs are great to use for responses when chatting.
