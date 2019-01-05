@@ -7,7 +7,10 @@ ADD . /go/src/github.com/Kegsay/wild-gif-chase
 
 RUN go build ./cmd/wild-gif-chase
 
-CMD ./wild-gif-chase --port 443 --src ./samples
+ENV LE_HOST
 
-EXPOSE 443
+CMD ./wild-gif-chase --src ./samples
+
+EXPOSE 8080
+EXPOSE 4443
 

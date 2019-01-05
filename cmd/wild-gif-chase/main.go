@@ -1,22 +1,25 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"image/gif"
 	"image/jpeg"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path"
 	"regexp"
 	"strings"
+
+	"golang.org/x/crypto/acme/autocert"
 )
 
 var (
-	portFlag = flag.Int("port", 0, "Port to listen on")
-	srcFlag  = flag.String("src", "", "Source GIF directory")
+	srcFlag = flag.String("src", "", "Source GIF directory")
 )
 
 var filenameRegexp = regexp.MustCompile(`^[a-zA-Z0-9\-_]+\.gif$`)
@@ -80,7 +83,7 @@ func handleSearch(w http.ResponseWriter, req *http.Request) {
 	for wfn := range seen {
 		fnames = append(fnames, wfn) // unique filenames only, no dupes
 	}
-	fmt.Println("search:", words, "produced", len(fnames), "results", "-", req.RemoteAddr, req.UserAgent())
+	log.Println("search:", words, "produced", len(fnames), "results", "-", req.RemoteAddr, req.UserAgent())
 
 	entriesHTML := make([]string, len(fnames))
 	for i := range entriesHTML {
@@ -111,7 +114,7 @@ func handleFiles(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	fmt.Println("file:", fname, "-", req.RemoteAddr, req.UserAgent())
+	log.Println("file:", fname, "-", req.RemoteAddr, req.UserAgent())
 	r := readFile(fname)
 	if r == nil {
 		w.WriteHeader(404)
@@ -136,7 +139,7 @@ func handleThumbs(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
-	fmt.Println("thumb:", fname, "-", req.RemoteAddr, req.UserAgent())
+	log.Println("thumb:", fname, "-", req.RemoteAddr, req.UserAgent())
 
 	f, err := os.Open(path.Join(*srcFlag, fname))
 	if err != nil {
@@ -197,7 +200,7 @@ func indexFiles() error {
 		}
 		fileSizes[name] = f.Size()
 	}
-	fmt.Println("Indexed", len(files), "files")
+	log.Println("Indexed", len(files), "files")
 	indexSize = len(files)
 	return nil
 }
@@ -241,8 +244,25 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("Listening on port", *portFlag)
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", *portFlag), nil); err != nil {
-		panic(err)
+	log.Println("Listening on port 8080")
+
+	if os.Getenv("LE_HOST") != "" {
+		certManager := autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(os.Getenv("LE_HOST")), //Your domain here
+			Cache:      autocert.DirCache("certs"),                   //Folder for storing certificates
+		}
+		server := &http.Server{
+			Addr: ":4443",
+			TLSConfig: &tls.Config{
+				GetCertificate: certManager.GetCertificate,
+			},
+		}
+
+		go http.ListenAndServe(":8080", certManager.HTTPHandler(nil))
+		log.Println("Listening on port 4443 (redirecting 8080)")
+		log.Fatal(server.ListenAndServeTLS("", "")) //Key and cert are coming from Let's Encrypt
+	} else {
+		log.Fatal(http.ListenAndServe(":8080", nil))
 	}
 }
