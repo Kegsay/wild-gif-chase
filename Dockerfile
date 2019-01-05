@@ -7,7 +7,7 @@ ADD . /go/src/github.com/Kegsay/wild-gif-chase
 
 RUN go build ./cmd/wild-gif-chase
 
-ENV LE_HOST
+ENV LE_HOST=""
 
 CMD ./wild-gif-chase --src ./samples
 
